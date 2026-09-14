@@ -1,0 +1,34 @@
+name: keepalive-workflow
+
+on:
+  schedule:
+    # 每天 UTC 23:00 运行（即北京时间次日 07:00）
+    # - cron: '0 23 * * *'
+  # workflow_dispatch: # 支持手动触发
+# 在你的工作流文件中添加以下内容。建议把它放在独立的 job 中，而不是混在业务逻辑里，这样更安全
+jobs:
+  # 你的原有任务...
+  main-job:
+    name: Main Job
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # ... 你原有的代码步骤
+
+  # 新增的保活任务
+  keepalive-job:
+    name: Keepalive Workflow
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write   # 这是必须的，允许 API 调用
+    steps:
+      - uses: gautamkrishnar/keepalive-workflow@v2
+
+# 备选写法（不依赖第三方 Action）
+# 如果你不想引入外部 Action，也可以用一行 curl 直接调用 API：
+      - name: Keepalive Workflow
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X PUT /repos/${{ github.repository }}/actions/workflows/${{ github.workflow }}/enable || true
