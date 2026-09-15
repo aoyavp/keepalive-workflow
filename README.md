@@ -1,4 +1,4 @@
-# 解决GitHub workflow 60天限制问题，推荐API 保活方案
+# 解决GitHub workflow 60天限制问题
 推荐配置：gautamkrishnar/keepalive-workflow
 在你的工作流文件中添加以下内容。建议把它放在独立的 job 中，而不是混在业务逻辑里，这样更安全
 ```
