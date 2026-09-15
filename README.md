@@ -41,6 +41,15 @@ jobs:
         with:
           gh_token: ${{ github.token }}
 ```
+## 几点说明
+1、if: always()：保证即使前面的 Run checkin 或 clear old run jobs 失败，保活步骤依然会执行。这点很重要，否则一旦签到脚本报错，保活就失效了。
+
+2、gh_token 参数：显式传入 github.token，确保 Action 有权限调用 API。虽然该 Action 默认会读取 GITHUB_TOKEN，但显式声明更清晰可靠。
+
+3、clear old run jobs 的潜在冲突：你这段脚本会删除除最新一次之外的所有运行记录。注意保活 Action 本身不会产生新的 workflow run，所以不会和这个清理逻辑冲突。但如果你后续把保活逻辑改成了「空提交」方案，就会产生新的 run，需要留意。
+
+4、保活触发时机：该 Action 默认在仓库 45 天无活动时才调用 API 保活，而不是每次运行都调用，所以你不用担心它每天产生额外操作。
+
 ## 或者
 1、在仓库的 .github/workflows/ 目录下创建一个名为 keepalive.yml 的文件。
 2、填入以下代码：
@@ -63,14 +72,6 @@ jobs:
       - name: Keepalive Workflow
         uses: gautamkrishnar/keepalive-workflow@v2 # 开源保活组件
 ```
-## 几点说明
-1、if: always()：保证即使前面的 Run checkin 或 clear old run jobs 失败，保活步骤依然会执行。这点很重要，否则一旦签到脚本报错，保活就失效了。
-
-2、gh_token 参数：显式传入 github.token，确保 Action 有权限调用 API。虽然该 Action 默认会读取 GITHUB_TOKEN，但显式声明更清晰可靠。
-
-3、clear old run jobs 的潜在冲突：你这段脚本会删除除最新一次之外的所有运行记录。注意保活 Action 本身不会产生新的 workflow run，所以不会和这个清理逻辑冲突。但如果你后续把保活逻辑改成了「空提交」方案，就会产生新的 run，需要留意。
-
-4、保活触发时机：该 Action 默认在仓库 45 天无活动时才调用 API 保活，而不是每次运行都调用，所以你不用担心它每天产生额外操作。
 
 ## 三、备选写法（不依赖第三方 Action）
 如果你不想引入外部 Action，也可以用一行 curl 直接调用 API：
@@ -84,7 +85,7 @@ jobs:
 ```
 不过这种写法只能「重新启用」已停用的工作流，不能预防 60 天倒计时归零。真正有效的保活还是要靠定期制造仓库活动，所以更推荐上面的 keepalive-workflow 方案。
 
-##或者：
+## 或者：
 原生纯脚本实现（无需依赖第三方插件）
 如果你不想使用第三方的 Action，也可以直接利用 GitHub Actions 内置的 GITHUB_TOKEN，通过几行原生 Shell 脚本自动修改文件并 Push，从而产生活跃度。
 1、在 .github/workflows/ 下新建 keepalive-native.yml
