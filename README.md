@@ -18,7 +18,7 @@ jobs:
     permissions:
       actions: write   # 这是必须的，允许 API 调用
     steps:
-      - uses: gautamkrishnar/keepalive-workflow@v2```
+      - uses: gautamkrishnar/keepalive-workflow@v2
 ```
 
 ## 关键配置说明
