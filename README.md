@@ -1,5 +1,5 @@
 # 解决GitHub workflow 60天限制问题
-推荐配置：gautamkrishnar/keepalive-workflow
+## 一、推荐配置：gautamkrishnar/keepalive-workflow
 在你的工作流文件中添加以下内容。建议把它放在独立的 job 中，而不是混在业务逻辑里，这样更安全
 ```
 jobs:
@@ -28,7 +28,7 @@ jobs:
 
 3、时间阈值：默认会在仓库 45 天无活动时触发 API 调用，这个时间比 GitHub 的 60 天限制要安全很多。
 
-## 备选方案
+## 二、备选方案
 如果上面的 Action 出现问题（例如因仓库无活动被 GitHub 误停用），可以换用 liskin/gh-workflow-keepalive。用法完全一样，同样需要 actions: write 权限，且不会产生 dummy commit
 
 如果项目 job 已经声明了 actions: write 权限，保活所需的 API 调用权限已满足，无需改动其他配置，直接在你的 checkin job 末尾追加一个保活步骤即可。
@@ -72,7 +72,7 @@ jobs:
 
 4、保活触发时机：该 Action 默认在仓库 45 天无活动时才调用 API 保活，而不是每次运行都调用，所以你不用担心它每天产生额外操作。
 
-## 备选写法（不依赖第三方 Action）
+## 三、备选写法（不依赖第三方 Action）
 如果你不想引入外部 Action，也可以用一行 curl 直接调用 API：
 ```
       - name: Keepalive Workflow
