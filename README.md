@@ -41,6 +41,28 @@ jobs:
         with:
           gh_token: ${{ github.token }}
 ```
+## 或者
+1、在仓库的 .github/workflows/ 目录下创建一个名为 keepalive.yml 的文件。
+2、填入以下代码：
+```
+name: Keep GitHub Actions Alive
+
+on:
+  schedule:
+    # 每 30 天的午夜 0 点触发一次（远小于 60 天的限制）
+    - cron: '0 0 1/30 * *'
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 必须赋予写权限，以便能够提交代码
+    steps:
+      - uses: actions/checkout@v4
+      - name: Keepalive Workflow
+        uses: gautamkrishnar/keepalive-workflow@v2 # 开源保活组件
+```
 ## 几点说明
 1、if: always()：保证即使前面的 Run checkin 或 clear old run jobs 失败，保活步骤依然会执行。这点很重要，否则一旦签到脚本报错，保活就失效了。
 
@@ -61,3 +83,35 @@ jobs:
           gh api -X PUT /repos/${{ github.repository }}/actions/workflows/${{ github.workflow }}/enable || true
 ```
 不过这种写法只能「重新启用」已停用的工作流，不能预防 60 天倒计时归零。真正有效的保活还是要靠定期制造仓库活动，所以更推荐上面的 keepalive-workflow 方案。
+
+##或者：
+原生纯脚本实现（无需依赖第三方插件）
+如果你不想使用第三方的 Action，也可以直接利用 GitHub Actions 内置的 GITHUB_TOKEN，通过几行原生 Shell 脚本自动修改文件并 Push，从而产生活跃度。
+1、在 .github/workflows/ 下新建 keepalive-native.yml
+2、填入以下代码：
+```
+name: Native Keepalive
+
+on:
+  schedule:
+    - cron: '0 0 1/30 * *' # 每 30 天运行一次
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Auto Commit to Keep Alive
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          # 创建或更新一个时间戳文件
+          echo "Last active: $(date)" > .github/keepalive.txt
+          git add .github/keepalive.txt
+          git commit -m "chore: automated keepalive commit to bypass 60-day limit" || exit 0
+          git push
+```
